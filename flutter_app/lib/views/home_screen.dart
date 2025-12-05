@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../viewmodels/home_viewmodel.dart';
 import '../widgets/custom_toggle_button.dart';
+import '../widgets/region_card.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -102,82 +103,40 @@ class _HomeScreenContent extends StatelessWidget {
                     selectedType: viewModel.selectedPlanType,
                     onTypeChanged: viewModel.setPlanType,
                   ),
-                  const SizedBox(height: 16),
-
-                  // Dropdown
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade200),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: viewModel.selectedContinent,
-                        isExpanded: true,
-                        icon: const Icon(Icons.keyboard_arrow_down),
-                        items: ['Europe', 'Asia', 'North America']
-                            .map((e) => DropdownMenuItem(value: e, child: Text('Continent: $e')))
-                            .toList(),
-                        onChanged: (val) {
-                          if (val != null) viewModel.setContinent(val);
-                        },
+                  
+                  // Dropdown (Only show for Countries view)
+                  if (viewModel.selectedPlanType == PlanType.countries) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade200),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: viewModel.selectedContinent,
+                          isExpanded: true,
+                          icon: const Icon(Icons.keyboard_arrow_down),
+                          items: ['Europe', 'Asia', 'North America']
+                              .map((e) => DropdownMenuItem(value: e, child: Text('Continent: $e')))
+                              .toList(),
+                          onChanged: (val) {
+                            if (val != null) viewModel.setContinent(val);
+                          },
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
 
-            // List
+            // List Content
             Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                itemCount: viewModel.filteredDestinations.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final dest = viewModel.filteredDestinations[index];
-                  return Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.shade100),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade50,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(dest.flagEmoji, style: const TextStyle(fontSize: 24)),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Text(
-                          dest.name,
-                          style: GoogleFonts.inter(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: const Color(0xFF1E293B),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+              child: viewModel.selectedPlanType == PlanType.countries
+                  ? _buildCountriesList(viewModel)
+                  : _buildRegionalList(viewModel),
             ),
           ],
         ),
@@ -196,6 +155,71 @@ class _HomeScreenContent extends StatelessWidget {
           BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: ''),
         ],
       ),
+    );
+  }
+
+  Widget _buildCountriesList(HomeViewModel viewModel) {
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      itemCount: viewModel.filteredDestinations.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final dest = viewModel.filteredDestinations[index];
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade100),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(dest.flagEmoji, style: const TextStyle(fontSize: 24)),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Text(
+                dest.name,
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF1E293B),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRegionalList(HomeViewModel viewModel) {
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      itemCount: viewModel.regions.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 16),
+      itemBuilder: (context, index) {
+        final region = viewModel.regions[index];
+        return RegionCard(
+          region: region,
+          isInitiallyExpanded: index == 0, // Expand first item by default
+        );
+      },
     );
   }
 }
